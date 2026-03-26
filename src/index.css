@@ -1,0 +1,27 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+@theme {
+  --font-headline: "Epilogue", sans-serif;
+  --font-body: "Plus Jakarta Sans", sans-serif;
+
+  --color-primary: #9e3d00;
+  --color-primary-container: #ff7a35;
+  --color-on-primary: #fff0ea;
+  --color-secondary: #006192;
+  --color-secondary-container: #aad6ff;
+  --color-surface: #fbf6ed;
+  --color-surface-container: #ede8dd;
+  --color-on-surface: #302f29;
+  --color-on-surface-variant: #5e5b55;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-body;
+  }
+}
+
+.scrapbook-rotate-left { transform: rotate(-1.5deg); }
+.scrapbook-rotate-right { transform: rotate(1deg); }
+.signature-gradient { background: linear-gradient(135deg, #9e3d00 0%, #ff7a35 100%); }
