@@ -1,33 +1,62 @@
 import { motion } from "motion/react";
-import { ArrowRight, Map } from "lucide-react";
+import { ArrowRight, Map, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+interface Blog {
+  id: string;
+  title: string;
+  category: string;
+  date: string;
+  thumbnail: string | null;
+}
 
 export default function Home() {
+  const [recentBlogs, setRecentBlogs] = useState<Blog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/blogs")
+      .then(res => res.json())
+      .then(data => {
+        if (data && Array.isArray(data.blogs)) {
+          setRecentBlogs(data.blogs.slice(0, 3));
+        }
+      })
+      .catch(err => console.error("Failed to fetch blogs:", err))
+      .finally(() => setIsLoading(false));
+  }, []);
+
   return (
     <div className="pt-24">
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-8 mb-24">
+      <section className="max-w-7xl mx-auto px-4 md:px-8 mb-16 md:mb-24">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative w-full h-[716px] rounded-3xl overflow-hidden shadow-xl scrapbook-rotate-right"
+          className="relative w-full h-[500px] md:h-[716px] rounded-2xl md:rounded-3xl overflow-hidden shadow-xl scrapbook-rotate-right"
         >
           <img 
-            alt="Group of friends traveling" 
+            alt="Our latest adventure" 
             className="w-full h-full object-cover" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6f222DCuqMPDAdP3IUruCh7UHBq4Cw_rv0AUAtpJeJPmj40RSqgbDOP7AeDEXq719DbkffJnUMzueuY23B42nnjXliy96v75G2jfohXAogoFMqzIuaGpKdamWtOts8UDUoqjhjbaOUkbZws45gfg6u9lxNYBQx0PKf-cVzaf0UmK8VYPqzo3p3SEaL3br0GxYqI4kGmBMpQfl9qLYwKUoj5BUvBf5L82WKBRxVB22q9-ZV9uVyqScCqB66RY3Yrrw_RYmotrC_A4"
+            src="/home/hero.webp"
+            onError={(e) => {
+              // Fallback if the image doesn't exist yet
+              e.currentTarget.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=1920";
+            }}
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex flex-col justify-end p-12">
-            <h1 className="font-headline text-5xl md:text-7xl font-black text-white max-w-3xl leading-tight mb-6">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-6 md:p-12">
+            <h1 className="font-headline text-3xl sm:text-5xl md:text-7xl font-black text-white max-w-3xl leading-tight mb-6 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
               Our World, One Budget Adventure at a Time.
             </h1>
-            <div className="flex gap-4">
-              <button className="signature-gradient text-on-primary font-headline font-bold px-8 py-4 rounded-full text-lg hover:scale-105 transition-transform">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link to="/gallery" className="signature-gradient text-on-primary font-headline font-bold px-8 py-3 md:py-4 rounded-full text-base md:text-lg hover:scale-105 transition-transform text-center">
                 Start Exploring
-              </button>
-              <button className="bg-white/20 backdrop-blur-md text-white font-headline font-bold px-8 py-4 rounded-full text-lg hover:bg-white/30 transition-all">
+              </Link>
+              <Link to="/about" className="bg-white/20 backdrop-blur-md text-white font-headline font-bold px-8 py-3 md:py-4 rounded-full text-base md:text-lg hover:bg-white/30 transition-all border border-white/30 text-center">
                 Our Story
-              </button>
+              </Link>
             </div>
           </div>
         </motion.div>
@@ -52,7 +81,10 @@ export default function Home() {
             <img 
               alt="Travel notebook" 
               className="rounded-xl shadow-md mb-6 w-full h-64 object-cover" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoYaAJsM-6EkxqKK3LzWK-ZBkDZDTJ-pChsGuH_TWWFJUj1FG8T4s0UbGsIFlhs00WaYkt_Smo3RaDpYysX4VnOzA-1LmhkhAHNI1r1BXG-enkloM3oCKoFPMOFGroqzl5KeWu_FQy7t22GpQqn2L4VnIumq3dzNz7ZLexjrqw6mCVZPwo4eYEXkNJdyQQA0rfpcmexI9TzGUXeoLa-RbWirhAVxS-0PEN-tICP0etX9LYghL_CQ63F8ptZKvHAODrjhhXSIso4Dw"
+              src="/home/intro.webp"
+              onError={(e) => {
+                e.currentTarget.src = "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=800";
+              }}
               referrerPolicy="no-referrer"
             />
             <p className="font-headline italic text-on-surface-variant text-center">
@@ -70,83 +102,81 @@ export default function Home() {
               <h3 className="font-headline text-4xl font-black text-primary mb-2">Recent Expeditions</h3>
               <p className="text-on-surface-variant">Freshly stamped pages from our favorite Asian escapes.</p>
             </div>
-            <button className="text-secondary font-bold flex items-center gap-2 hover:gap-4 transition-all">
+            <Link to="/blog" className="text-secondary font-bold flex items-center gap-2 hover:gap-4 transition-all">
               View All Trips <ArrowRight size={20} />
-            </button>
+            </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Neon Nights in Hong Kong",
-                desc: "Mastering the Octopus card, hunting for the best $2 Michelin-star dim sum, and finding the quietest peaks.",
-                tag: "Budget-Friendly",
-                img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB44E0Qt8WFnS_mXzt-g5WMnvwUN9DG_zBdhkWj6lVx3A6wLDixk9wQdVn-TxtAo0Z2F9QClsa-_oMcuOZawUcFmzQkY2u6o76go_dy9QBQvb_fx2Gwdu4J5WWOb0sz9YwnDbJ5lI-dsLfRVVWCtvVfY2MVPNcRzbbOdBtFBCm9uOWeIO1tlG0k769va6sD9xMa3pvGAgIcJD7DAE8e_rbO0V64vLabRcYpGkCcV0pBWvgejZfVHwXT-ASog-vHv65LH9fjRwITIOc"
-              },
-              {
-                title: "Portuguese Echoes: Macau",
-                desc: "A day trip that felt like another world. From egg tarts in sleepy villages to the glittering lights of Cotai.",
-                tag: "Cultural Mix",
-                img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB1czgNh6EVx7sX7FQmwj1H09hJxNrdppvV-CPIuwMKcqo3VR-7OFUR0_65fDYIGaZVv1NnWSoUuc7eoWgkCDXSCmN85irSSKqAwkilO0tCQLMpD1lmxEeC1CwC04NTcpkA9B5bV6bAfm9QMLlL2KLIpKXsd2n0GAq7wbf5dRxC2sJHQJEzQfr-S2fmtw4WlzaoBRQZQ-8l2irGpENWdMpdfevdApEdFPHwBk5_uWtEPmPSYmuxpAI1RB2B0lazs2JdaaQOUmzBNwM",
-                offset: true
-              },
-              {
-                title: "The Lion City on a Dime",
-                desc: "Who says Singapore is expensive? Hawker centers, free botanical light shows, and wandering Little India.",
-                tag: "City Guide",
-                img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAEHDGg2IXNkfQh2tbjTEIyo_gN4ILMx1ldYRbanTVveM3MO2fSUTv89Rzp8lyivwSBg_ZDNwx5ApqhZTiNdXpyRBAgVEgXngORj7NUecuElwuvdTcf1b5y4fbYVsy8qpRgfPvdKTfE6NjTVIiCBd2bDtEZAQCef4f7Nk8gTyIyJWW8modp_7JHjSefNjp7k_B7gzQW-ezvl3Ji_Gr_e79Bzdjg3_AFPfxLrvBDR8ecX5Jr-NXSGjMp2uM3ZrxA_cIewGeB3gqVH2M"
-              }
-            ].map((trip, i) => (
-              <motion.div 
-                key={i}
-                whileHover={{ y: -10 }}
-                className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all ${trip.offset ? 'md:mt-12' : ''}`}
-              >
-                <div className="h-64 overflow-hidden relative">
-                  <img src={trip.img} alt={trip.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
-                  <span className="absolute top-4 right-4 bg-primary-container text-on-surface font-bold text-xs px-3 py-1 rounded-full uppercase">
-                    {trip.tag}
-                  </span>
-                </div>
-                <div className="p-8">
-                  <h4 className="font-headline text-2xl font-bold mb-3">{trip.title}</h4>
-                  <p className="text-on-surface-variant mb-6 line-clamp-2">{trip.desc}</p>
-                  <button className="flex items-center gap-2 text-primary font-headline font-black uppercase text-sm tracking-widest">
-                    Read More <ArrowRight size={16} />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {recentBlogs.map((blog, i) => (
+                <motion.div 
+                  key={blog.id}
+                  whileHover={{ y: -10 }}
+                  className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all ${i === 1 ? 'md:mt-12' : ''}`}
+                >
+                  <Link to={`/blog/${blog.id}`}>
+                    <div className="h-64 overflow-hidden relative">
+                      <img 
+                        src={blog.thumbnail || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=800"} 
+                        alt={blog.title} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        referrerPolicy="no-referrer" 
+                      />
+                      <span className="absolute top-4 right-4 bg-primary-container text-on-surface font-bold text-xs px-3 py-1 rounded-full uppercase">
+                        {blog.category}
+                      </span>
+                    </div>
+                    <div className="p-8">
+                      <h4 className="font-headline text-2xl font-bold mb-3">{blog.title}</h4>
+                      <p className="text-on-surface-variant mb-6 line-clamp-2">
+                        {new Date(blog.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </p>
+                      <div className="flex items-center gap-2 text-primary font-headline font-black uppercase text-sm tracking-widest">
+                        Read More <ArrowRight size={16} />
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="max-w-7xl mx-auto px-8 py-24 flex flex-col md:flex-row gap-12 items-center">
-        <div className="flex-1">
-          <h2 className="font-headline text-4xl font-black mb-4">Pack your bags (digitally).</h2>
-          <p className="text-on-surface-variant text-lg">Get our bi-weekly newsletter with budget itineraries, gear reviews, and stories from the road.</p>
-        </div>
-        <div className="flex-1 w-full max-w-md">
-          <div className="flex flex-col gap-4">
-            <input 
-              className="bg-surface-container border-b-2 border-on-surface-variant/20 focus:border-primary focus:outline-none px-4 py-4 rounded-t-lg font-body text-lg transition-colors" 
-              placeholder="Your adventure email..." 
-            />
-            <button className="signature-gradient text-on-primary font-headline font-bold py-4 rounded-full text-lg shadow-lg hover:scale-105 active:scale-95 transition-all">
-              Join the Adventure
-            </button>
+      {/* CTA Section */}
+      <section className="max-w-7xl mx-auto px-8 py-32 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="bg-primary text-on-primary rounded-[3rem] p-12 md:p-24 shadow-2xl relative overflow-hidden"
+        >
+          <div className="relative z-10">
+            <h2 className="font-headline text-5xl md:text-7xl font-black mb-8 tracking-tighter">Ready for your next adventure?</h2>
+            <p className="text-xl md:text-2xl mb-12 opacity-90 max-w-2xl mx-auto font-medium">
+              The world is waiting, and your budget is bigger than you think. Start your journey today.
+            </p>
+            <Link to="/gallery" className="inline-block bg-white text-primary font-headline font-black px-12 py-5 rounded-full text-xl hover:scale-105 transition-transform shadow-xl uppercase tracking-widest">
+              Explore the Gallery
+            </Link>
           </div>
-        </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary/20 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl"></div>
+        </motion.div>
       </section>
 
       {/* FAB */}
-      <button className="fixed bottom-8 right-8 signature-gradient text-on-primary p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all z-40 group">
+      <Link to="/gallery" className="fixed bottom-8 right-8 signature-gradient text-on-primary p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all z-40 group">
         <Map size={32} />
         <span className="absolute right-full mr-4 bg-on-surface text-surface text-xs font-bold px-3 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
           Map Our Travels
         </span>
-      </button>
+      </Link>
     </div>
   );
 }
