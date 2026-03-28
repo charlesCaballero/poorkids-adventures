@@ -11,20 +11,59 @@ interface Blog {
   thumbnail: string | null;
 }
 
+interface GalleryImage {
+  url: string;
+  category: string;
+  id: string;
+}
+
+// Module-level cache variables to persist data across route navigation
+let cachedBlogs: Blog[] | null = null;
+let cachedGallery: GalleryImage[] | null = null;
+
 export default function Home() {
-  const [recentBlogs, setRecentBlogs] = useState<Blog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize state with cached data if it exists
+  const [recentBlogs, setRecentBlogs] = useState<Blog[]>(cachedBlogs || []);
+  const [recentGallery, setRecentGallery] = useState<GalleryImage[]>(cachedGallery || []);
+  // Only show loading state if we don't have cached data yet
+  const [isLoading, setIsLoading] = useState(!cachedBlogs || !cachedGallery);
 
   useEffect(() => {
-    fetch("/api/blogs")
-      .then(res => res.json())
-      .then(data => {
-        if (data && Array.isArray(data.blogs)) {
-          setRecentBlogs(data.blogs.slice(0, 3));
+    // If we already have the cache, skip the fetch request entirely
+    if (cachedBlogs && cachedGallery) {
+      return;
+    }
+
+    const fetchAllData = async () => {
+      try {
+        const [blogsRes, galleryRes] = await Promise.all([
+          fetch("/api/blogs"),
+          fetch("/api/gallery")
+        ]);
+
+        const blogsData = await blogsRes.json();
+        const galleryData = await galleryRes.json();
+
+        if (blogsData && Array.isArray(blogsData.blogs)) {
+          const fetchedBlogs = blogsData.blogs.slice(0, 3);
+          cachedBlogs = fetchedBlogs; // Save to cache
+          setRecentBlogs(fetchedBlogs);
         }
-      })
-      .catch(err => console.error("Failed to fetch blogs:", err))
-      .finally(() => setIsLoading(false));
+
+        if (galleryData && Array.isArray(galleryData.images)) {
+          const shuffledGallery = [...galleryData.images].sort(() => Math.random() - 0.5);
+          const fetchedGallery = shuffledGallery.slice(0, 6);
+          cachedGallery = fetchedGallery; 
+          setRecentGallery(fetchedGallery);
+        }
+      } catch (err) {
+        console.error("Failed to fetch home data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllData();
   }, []);
 
   return (
@@ -41,7 +80,6 @@ export default function Home() {
             className="w-full h-full object-cover" 
             src="/home/hero.webp"
             onError={(e) => {
-              // Fallback if the image doesn't exist yet
               e.currentTarget.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=1920";
             }}
             referrerPolicy="no-referrer"
@@ -63,7 +101,7 @@ export default function Home() {
       </section>
 
       {/* Intro Section */}
-      <section className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-2 gap-16 items-center mb-24">
+      <section className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-2 gap-16 items-center mb-32">
         <div className="space-y-6">
           <div className="inline-block bg-secondary-container text-secondary px-4 py-1 rounded-full text-sm font-bold uppercase tracking-widest">
             Digital Field Journal
@@ -94,13 +132,62 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Recent Expeditions */}
-      <section className="bg-surface-container py-24">
+      {/* Visual Stories (Gallery Preview) */}
+      <section className="bg-on-surface text-surface py-24 mb-32">
         <div className="max-w-7xl mx-auto px-8">
-          <div className="flex justify-between items-end mb-16">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+            <div className="max-w-xl">
+              <span className="text-secondary font-bold uppercase tracking-widest text-sm mb-4 block">The Visual Journal</span>
+              <h3 className="font-headline text-4xl md:text-6xl font-black mb-6">Captured Moments.</h3>
+              <p className="text-surface/70 text-lg">
+                A collective scrapbook of our travels. These are the views, streets, and stories shared by a bunch of broke but adventurous explorers.
+              </p>
+            </div>
+            <Link to="/gallery" className="bg-primary text-on-primary px-8 py-4 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2">
+              View All Memories <ArrowRight size={20} />
+            </Link>
+          </div>
+
+          {isLoading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {recentGallery.map((img, i) => (
+                <motion.div
+                  key={img.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className={`aspect-square rounded-xl overflow-hidden scrapbook-rotate-${i % 2 === 0 ? 'left' : 'right'} group cursor-pointer`}
+                >
+                  <img 
+                    src={img.url} 
+                    alt="Gallery highlight" 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.src = `https://picsum.photos/seed/${img.id}/400/400`;
+                    }}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Recent Expeditions */}
+      <section className="py-24 mb-32">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
             <div>
-              <h3 className="font-headline text-4xl font-black text-primary mb-2">Recent Expeditions</h3>
-              <p className="text-on-surface-variant">Freshly stamped pages from our favorite Asian escapes.</p>
+              <span className="text-primary font-bold uppercase tracking-widest text-sm mb-4 block">The Field Notes</span>
+              <h3 className="font-headline text-4xl md:text-6xl font-black text-primary mb-6">Recent Expeditions</h3>
+              <p className="text-on-surface-variant text-lg">Freshly stamped pages from our favorite Asian escapes.</p>
             </div>
             <Link to="/blog" className="text-secondary font-bold flex items-center gap-2 hover:gap-4 transition-all">
               View All Trips <ArrowRight size={20} />
@@ -116,23 +203,27 @@ export default function Home() {
               {recentBlogs.map((blog, i) => (
                 <motion.div 
                   key={blog.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
                   whileHover={{ y: -10 }}
-                  className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all ${i === 1 ? 'md:mt-12' : ''}`}
+                  className={`group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all ${i === 1 ? 'md:mt-12' : ''}`}
                 >
                   <Link to={`/blog/${blog.id}`}>
-                    <div className="h-64 overflow-hidden relative">
+                    <div className="h-72 overflow-hidden relative">
                       <img 
                         src={blog.thumbnail || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=800"} 
                         alt={blog.title} 
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                        referrerPolicy="no-referrer" 
+                        referrerPolicy="no-referrer"
+                        loading="lazy"
                       />
-                      <span className="absolute top-4 right-4 bg-primary-container text-on-surface font-bold text-xs px-3 py-1 rounded-full uppercase">
+                      <span className="absolute top-6 right-6 bg-primary text-on-primary font-bold text-xs px-4 py-1.5 rounded-full uppercase tracking-widest">
                         {blog.category}
                       </span>
                     </div>
                     <div className="p-8">
-                      <h4 className="font-headline text-2xl font-bold mb-3">{blog.title}</h4>
+                      <h4 className="font-headline text-2xl font-bold mb-3 group-hover:text-primary transition-colors">{blog.title}</h4>
                       <p className="text-on-surface-variant mb-6 line-clamp-2">
                         {new Date(blog.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                       </p>
@@ -145,6 +236,96 @@ export default function Home() {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Travel Toolkit (Tips Preview) */}
+      <section className="bg-surface-container py-24 mb-32">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            <div className="lg:col-span-5">
+              <span className="text-secondary font-bold uppercase tracking-widest text-sm mb-4 block">Travel Toolkit</span>
+              <h3 className="font-headline text-4xl md:text-5xl font-black mb-8 leading-tight">Travel Smarter, Spend Way Less.</h3>
+              <p className="text-on-surface-variant text-lg mb-10">
+                The ultimate field guide for the intentional wanderer. We've gathered our best-kept secrets to seeing the world without a trust fund.
+              </p>
+              <Link to="/tips" className="inline-flex items-center gap-3 bg-secondary text-on-primary px-8 py-4 rounded-full font-bold hover:scale-105 transition-transform">
+                Get All Tips <ArrowRight size={20} />
+              </Link>
+            </div>
+            <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { title: "Budget Packing Hacks", desc: "Fit three weeks of life into a single personal item bag.", icon: "🎒" },
+                { title: "Cheap Eats in Asia", desc: "Eat like a king on a street-food budget. $1 bowls of Pho.", icon: "🍜" },
+                { title: "Navigating Transport", desc: "Mastering the MTR, MRT, and the thrill of GrabBikes.", icon: "🚆" },
+                { title: "Money Management", desc: "Avoid transaction fees and always pay in local currency.", icon: "💰" }
+              ].map((tip, i) => (
+                <motion.div
+                  key={tip.title}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="bg-white p-8 rounded-3xl shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="text-4xl mb-4">{tip.icon}</div>
+                  <h4 className="font-headline font-bold text-xl mb-2">{tip.title}</h4>
+                  <p className="text-on-surface-variant text-sm">{tip.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Meet the Crew (About Preview) */}
+      <section className="max-w-7xl mx-auto px-8 mb-32">
+        <div className="text-center mb-16">
+          <span className="text-primary font-bold uppercase tracking-widest text-sm mb-4 block">The Faces Behind the Blog</span>
+          <h3 className="font-headline text-4xl md:text-6xl font-black mb-6">Meet the Crew.</h3>
+          <p className="text-on-surface-variant text-lg max-w-2xl mx-auto">
+            We're not a massive travel community. We're just five friends who love to wander, eat street food, and get lost in new cities.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          {[
+            { name: "Charles", role: "The Financier", img: "/about/charles.webp", fallback: "https://i.pravatar.cc/150?u=charles" },
+            { name: "Noelle", role: "The Planner", img: "/about/noelle.webp", fallback: "https://i.pravatar.cc/150?u=noelle" },
+            { name: "Reylan", role: "The Researcher", img: "/about/reylan.webp", fallback: "https://i.pravatar.cc/150?u=reylan" },
+            { name: "Peps", role: "The Local Talker", img: "/about/peps.webp", fallback: "https://i.pravatar.cc/150?u=peps" },
+            { name: "CJ", role: "The Picture Freak", img: "/about/cj.webp", fallback: "https://i.pravatar.cc/150?u=cj" }
+          ].map((crew, i) => (
+            <motion.div
+              key={crew.name}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="bg-surface-container p-6 rounded-3xl text-center group hover:bg-primary/5 transition-colors"
+            >
+              <div className="relative w-32 h-32 mx-auto mb-6">
+                <img 
+                  src={crew.img} 
+                  alt={crew.name} 
+                  className="w-full h-full object-cover rounded-full border-4 border-white shadow-lg group-hover:scale-110 transition-transform"
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = crew.fallback;
+                  }}
+                />
+              </div>
+              <h4 className="font-headline font-bold text-xl mb-1">{crew.name}</h4>
+              <p className="text-secondary text-sm font-bold uppercase tracking-widest">{crew.role}</p>
+            </motion.div>
+          ))}
+        </div>
+        
+        <div className="mt-12 text-center">
+          <Link to="/about" className="text-primary font-bold flex items-center justify-center gap-2 hover:gap-4 transition-all">
+            Read Our Full Story <ArrowRight size={20} />
+          </Link>
         </div>
       </section>
 
@@ -170,13 +351,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* FAB */}
-      <Link to="/gallery" className="fixed bottom-8 right-8 signature-gradient text-on-primary p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all z-40 group">
-        <Map size={32} />
-        <span className="absolute right-full mr-4 bg-on-surface text-surface text-xs font-bold px-3 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-          Map Our Travels
-        </span>
-      </Link>
     </div>
   );
 }

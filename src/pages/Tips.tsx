@@ -182,10 +182,14 @@ export default function Tips() {
               Read Full Guide <ArrowRight size={20} />
             </button>
           </div>
-          <div className="absolute top-12 right-12 hidden lg:block scrapbook-rotate-right pointer-events-none z-10">
+          <div className="absolute bottom-12 right-12 hidden lg:block scrapbook-rotate-right pointer-events-none z-10">
             <img 
-              src="https://images.unsplash.com/photo-1553531384-397c80973a0b?auto=format&fit=crop&q=80&w=400" 
-              className="w-64 h-80 object-cover rounded-xl shadow-xl"
+              src="/tips/hacks1.webp"
+              onError={(e) => {
+                // Fallback if the image doesn't exist yet
+                e.currentTarget.src = "https://images.unsplash.com/photo-1553531384-397c80973a0b?auto=format&fit=crop&q=80&w=400";
+              }}
+              className="w-44 h-54 object-cover rounded-xl shadow-xl"
               referrerPolicy="no-referrer"
             />
           </div>
@@ -239,9 +243,10 @@ export default function Tips() {
             <div className="flex -space-x-3 mb-6">
               {[
                 { img: "/about/charles.webp", fallback: "https://i.pravatar.cc/150?u=charles" },
-                { img: "/about/sarah.webp", fallback: "https://i.pravatar.cc/150?u=sarah" },
-                { img: "/about/mike.webp", fallback: "https://i.pravatar.cc/150?u=mike" },
-                { img: "/about/elena.webp", fallback: "https://i.pravatar.cc/150?u=elena" }
+                { img: "/about/noelle.webp", fallback: "https://i.pravatar.cc/150?u=noelle" },
+                { img: "/about/reylan.webp", fallback: "https://i.pravatar.cc/150?u=reylan" },
+                { img: "/about/peps.webp", fallback: "https://i.pravatar.cc/150?u=peps" },
+                { img: "/about/cj.webp", fallback: "https://i.pravatar.cc/150?u=cj" }
               ].map((member, i) => (
                 <img 
                   key={i} 
@@ -272,7 +277,7 @@ export default function Tips() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {[
-            { icon: Wallet, title: "Money Management", desc: "Use digital banks like Revolut or Wise to avoid transaction fees. Always pay in local currency at ATMs." },
+            { icon: Wallet, title: "Money Management", desc: "Use digital banks like GCash, Maya or GoTyme to avoid transaction fees. Always pay in local currency at ATMs." },
             { icon: Smartphone, title: "Essential Apps", desc: "Grab (SE Asia), Google Maps (Offline), XE Currency, and Klook for booking activities at a discount." },
             { icon: ShieldCheck, title: "Safety & Health", desc: "Always have travel insurance. Keep a digital copy of your passport on Google Drive and a physical one hidden in your bag." }
           ].map((item, i) => (

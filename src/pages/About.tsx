@@ -79,29 +79,46 @@ export default function About() {
           <h2 className="font-headline font-bold text-4xl mb-4">The Crew</h2>
           <p className="text-on-surface-variant">The faces behind the field notes.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {[
-            { name: "Charles", role: "The Navigator", bio: "Always has the offline maps ready and knows where the best coffee is.", img: "/about/charles.webp", fallback: "https://i.pravatar.cc/150?u=charles" },
-            { name: "Sarah", role: "The Storyteller", bio: "Captures the moments that words can't quite describe.", img: "/about/sarah.webp", fallback: "https://i.pravatar.cc/150?u=sarah" },
-            { name: "Mike", role: "The Budget King", bio: "Can find a Michelin-star meal for under $5 in any city.", img: "/about/mike.webp", fallback: "https://i.pravatar.cc/150?u=mike" },
-            { name: "Elena", role: "The Explorer", bio: "The first one to suggest a 4 AM hike for the sunrise.", img: "/about/elena.webp", fallback: "https://i.pravatar.cc/150?u=elena" }
+            { 
+              name: "Charles", 
+              role: "Founder & The Human ATM", 
+              bio: "The visionary behind PoorKids Adventures. Technically funds the trips by letting everyone use his credit card for bookings. The silent backbone and the one documenting our journey here.", 
+              img: "/about/charles.webp", 
+              fallback: "https://i.pravatar.cc/150?u=charles",
+              highlight: true 
+            },
+            { name: "Noelle", role: "The Logistics Lead", bio: "Plans the whole trip, handles all travel documents, and crafts the perfect itinerary. Keeps us all in line.", img: "/about/noelle.webp", fallback: "https://i.pravatar.cc/150?u=noelle" },
+            { name: "Reylan", role: "The Scout", bio: "Our lead researcher who finds and recommends the best spots, from hidden hotels to the tastiest street food.", img: "/about/reylan.webp", fallback: "https://i.pravatar.cc/150?u=reylan" },
+            { name: "Peps", role: "The Resident Tita", bio: "Talks to locals like a local and always has a funny story from her wild experiences to share.", img: "/about/peps.webp", fallback: "https://i.pravatar.cc/150?u=peps" },
+            { name: "CJ", role: "The Pictorial King", bio: "Obsessed with the perfect shot. Will spend half an hour in one spot until the pose and quality are just right.", img: "/about/cj.webp", fallback: "https://i.pravatar.cc/150?u=cj" }
           ].map((member, i) => (
             <motion.div 
               key={i}
               whileHover={{ y: -8 }}
-              className="bg-surface-container rounded-3xl p-8 text-center"
+              className={`bg-surface-container rounded-3xl p-6 md:p-8 flex flex-col sm:flex-row items-center gap-8 relative overflow-hidden ${member.highlight ? 'md:col-span-2 border-2 border-primary/20 shadow-xl' : ''}`}
             >
-              <img 
-                src={member.img} 
-                className="w-24 h-24 rounded-full mx-auto mb-6 border-4 border-white shadow-md object-cover" 
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  e.currentTarget.src = member.fallback;
-                }}
-              />
-              <h3 className="font-headline font-bold text-xl mb-1">{member.name}</h3>
-              <p className="text-secondary text-sm font-bold uppercase tracking-widest mb-4">{member.role}</p>
-              <p className="text-on-surface-variant text-sm">{member.bio}</p>
+              {member.highlight && (
+                <div className="absolute top-0 right-0 bg-primary text-on-primary px-6 py-2 rounded-bl-3xl font-headline font-black text-xs uppercase tracking-widest shadow-lg z-10">
+                  Founder
+                </div>
+              )}
+              <div className="shrink-0">
+                <img 
+                  src={member.img} 
+                  className={`${member.highlight ? 'w-48 h-48 md:w-64 md:h-64' : 'w-32 h-32 md:w-40 md:h-40'} rounded-2xl shadow-xl object-cover scrapbook-rotate-${i % 2 === 0 ? 'right' : 'left'} border-8 border-white`} 
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.src = member.fallback;
+                  }}
+                />
+              </div>
+              <div className="text-center sm:text-left">
+                <h3 className={`font-headline font-bold mb-1 ${member.highlight ? 'text-3xl md:text-4xl' : 'text-2xl'}`}>{member.name}</h3>
+                <p className="text-secondary text-sm md:text-base font-bold uppercase tracking-widest mb-4">{member.role}</p>
+                <p className={`text-on-surface-variant ${member.highlight ? 'text-lg md:text-xl leading-relaxed' : 'text-sm md:text-base'}`}>{member.bio}</p>
+              </div>
             </motion.div>
           ))}
         </div>

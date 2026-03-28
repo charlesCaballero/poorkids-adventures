@@ -28,7 +28,8 @@ async function startServer() {
 
     try {
       // 1. Fetch subfolders (categories)
-      const folderUrl = `https://www.googleapis.com/drive/v3/files?q='${rootFolderId}'+in+parents+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false&key=${apiKey}`;
+      // Added pageSize=1000 just in case you ever have more than 100 country/subfolders!
+      const folderUrl = `https://www.googleapis.com/drive/v3/files?q='${rootFolderId}'+in+parents+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false&pageSize=1000&key=${apiKey}`;
       const folderRes = await fetch(folderUrl);
       const folderData = await folderRes.json();
 
@@ -36,26 +37,40 @@ async function startServer() {
         return res.json({ images: [] });
       }
 
-      const allImages: { id: string; url: string; category: string }[] = [];
+      // Notice we added 'name' to the expected type so React can sort it
+      const allImages = [];
 
-      // 2. For each subfolder, fetch images
+      // 2. For each subfolder, fetch ALL images using pagination
       for (const folder of folderData.files) {
-        const fileUrl = `https://www.googleapis.com/drive/v3/files?q='${folder.id}'+in+parents+and+mimeType+contains+'image/'+and+trashed=false&fields=files(id,name,webContentLink)&key=${apiKey}`;
-        const fileRes = await fetch(fileUrl);
-        const fileData = await fileRes.json();
+        let pageToken = ""; // Initialize empty token
+        
+        do {
+          // Build the URL: added pageSize=1000 and fields to grab nextPageToken and name
+          let fileUrl = `https://www.googleapis.com/drive/v3/files?q='${folder.id}'+in+parents+and+mimeType+contains+'image/'+and+trashed=false&fields=nextPageToken,files(id,name)&pageSize=1000&key=${apiKey}`;
+          
+          // If we have a token from a previous loop, append it to get the next page
+          if (pageToken) {
+            fileUrl += `&pageToken=${pageToken}`;
+          }
 
-        if (fileData.files) {
-          fileData.files.forEach((file: any) => {
-            // Use the thumbnail link with a large size for better performance/quality balance
-            // Or use the direct download link (webContentLink)
-            // Thumbnail link format: https://drive.google.com/thumbnail?id={id}&sz=w1000
-            allImages.push({
-              id: file.id,
-              url: `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`,
-              category: folder.name
+          const fileRes = await fetch(fileUrl);
+          const fileData = await fileRes.json();
+
+          if (fileData.files) {
+            fileData.files.forEach((file) => {
+              allImages.push({
+                id: file.id,
+                name: file.name, // <--- Crucial: Passing the name to the frontend for sorting
+                url: `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`,
+                category: folder.name
+              });
             });
-          });
-        }
+          }
+
+          // Set the token for the next loop. If Google doesn't return one, we've hit the end of the folder!
+          pageToken = fileData.nextPageToken;
+
+        } while (pageToken); 
       }
 
       res.json({ images: allImages });

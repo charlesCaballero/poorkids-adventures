@@ -6,6 +6,7 @@ interface GalleryImage {
   url: string;
   category: string;
   id: string;
+  name: string; // Included for sorting
 }
 
 // Simple cache to persist images across navigation within the same session
@@ -33,7 +34,6 @@ export default function Gallery() {
       }
     }
 
-    // If we have cached data, we don't need to fetch again
     if (galleryCache) {
       setIsLoading(false);
       return;
@@ -47,14 +47,22 @@ export default function Gallery() {
       })
       .then(data => {
         if (data.images) {
-          const uniqueCategories = Array.from(new Set(data.images.map((img: GalleryImage) => img.category))) as string[];
+          // --- SORTING LOGIC: Largest to Lowest (Descending) ---
+          const sortedImages = data.images.sort((a: GalleryImage, b: GalleryImage) => {
+            return b.name.localeCompare(a.name, undefined, { 
+              numeric: true, 
+              sensitivity: 'base' 
+            });
+          });
+
+          const uniqueCategories = Array.from(new Set(sortedImages.map((img: GalleryImage) => img.category))) as string[];
           const cats = ["All Stories", ...uniqueCategories.sort()];
           
-          setAllImages(data.images);
+          setAllImages(sortedImages);
           setCategories(cats);
           
           // Update cache
-          galleryCache = { images: data.images, categories: cats };
+          galleryCache = { images: sortedImages, categories: cats };
         }
       })
       .catch(err => {
@@ -123,13 +131,14 @@ export default function Gallery() {
         </div>
       </header>
 
+      {/* Category Filters */}
       <div className="flex flex-wrap justify-center gap-3 mb-16">
         {categories.map((cat) => (
           <button 
             key={cat}
             onClick={() => {
               setActiveCategory(cat);
-              setVisibleCount(12); // Reset count when switching categories
+              setVisibleCount(12);
             }}
             className={`px-6 py-2 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${
               activeCategory === cat 
@@ -162,6 +171,7 @@ export default function Gallery() {
           <p className="text-on-surface-variant text-xl italic">No memories found in this category yet. Time for a new adventure?</p>
         </div>
       ) : (
+        /* Masonry-style Grid */
         <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
           {displayedImages.map((img, i) => (
             <motion.div 
@@ -177,7 +187,7 @@ export default function Gallery() {
               <div className="relative aspect-auto">
                 <img 
                   src={img.url} 
-                  alt={`Gallery item ${i}`} 
+                  alt={img.name} 
                   className="w-full h-auto object-cover rounded-xl transition-transform duration-500"
                   style={{ transform: `rotate(${rotations[img.url] || 0}deg)` }}
                   referrerPolicy="no-referrer"
@@ -186,6 +196,8 @@ export default function Gallery() {
                   }}
                 />
               </div>
+              
+              {/* Overlay Actions */}
               <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center p-6 group">
                 <div className="flex flex-col items-center gap-4">
                   <div className="flex gap-2">
@@ -206,9 +218,9 @@ export default function Gallery() {
                   </div>
                   <div className="text-center">
                     <p className="text-white font-headline font-bold text-lg">
-                      {activeCategory === "All Stories" ? img.category : activeCategory} #{i + 1}
+                      {img.name.split('.')[0]}
                     </p>
-                    <p className="text-white/70 text-xs uppercase tracking-widest">Digital Scrapbook</p>
+                    <p className="text-white/70 text-xs uppercase tracking-widest">{img.category}</p>
                   </div>
                 </div>
               </div>
@@ -248,6 +260,7 @@ export default function Gallery() {
         )}
       </AnimatePresence>
 
+      {/* Pagination */}
       {hasMore && (
         <div className="mt-24 text-center">
           <button 
@@ -260,7 +273,7 @@ export default function Gallery() {
         </div>
       )}
 
-      {/* Back to Top Button */}
+      {/* Scroll to Top */}
       <AnimatePresence>
         {showScrollTop && (
           <motion.button
