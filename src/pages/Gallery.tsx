@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, Maximize2, X, RotateCw, ArrowUp, Loader2 } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { Skeleton } from "../components/Skeleton";
 
 interface GalleryImage {
   url: string;
@@ -162,9 +163,15 @@ export default function Gallery() {
           <p className="text-on-surface-variant max-w-md mx-auto">{error}</p>
         </div>
       ) : isLoading ? (
-        <div className="flex flex-col items-center justify-center py-32 gap-6">
-          <Loader2 className="w-12 h-12 text-primary animate-spin" />
-          <p className="text-on-surface-variant font-medium animate-pulse">Unpacking memories...</p>
+        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+          {[...Array(9)].map((_, i) => (
+            <Skeleton 
+              key={i} 
+              className={`w-full rounded-xl ${
+                i % 3 === 0 ? "h-80" : i % 3 === 1 ? "h-64" : "h-96"
+              }`} 
+            />
+          ))}
         </div>
       ) : filteredImages.length === 0 ? (
         <div className="text-center py-20">

@@ -1,7 +1,8 @@
 import { motion } from "motion/react";
-import { ArrowRight, MapPin, Plane, Hotel, Mail, Loader2 } from "lucide-react";
+import { ArrowRight, MapPin, Plane, Hotel, Loader2, Calendar, RotateCcw, Globe } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { Skeleton } from "../components/Skeleton";
 
 interface BlogPost {
   id: string;
@@ -21,6 +22,10 @@ export default function Blog() {
   const [categories, setCategories] = useState<string[]>(blogsCache?.categories || ["All Entries"]);
   const [isLoading, setIsLoading] = useState(!blogsCache);
   const [error, setError] = useState<string | null>(null);
+  const [viewAll, setViewAll] = useState(false);
+  const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     if (blogsCache) {
@@ -54,9 +59,29 @@ export default function Blog() {
   }, []);
 
   const filteredBlogs = useMemo(() => {
-    if (activeCategory === "All Entries") return allBlogs;
-    return allBlogs.filter(b => b.category === activeCategory);
-  }, [allBlogs, activeCategory]);
+    let blogs = activeCategory === "All Entries"
+      ? allBlogs
+      : allBlogs.filter(b => b.category === activeCategory);
+
+    if (search) {
+      blogs = blogs.filter(b =>
+        b.title.toLowerCase().includes(search.toLowerCase()) ||
+        b.category.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    if (startDate) {
+      const start = new Date(startDate).getTime();
+      blogs = blogs.filter(b => new Date(b.date).getTime() >= start);
+    }
+
+    if (endDate) {
+      const end = new Date(endDate).getTime();
+      blogs = blogs.filter(b => new Date(b.date).getTime() <= end);
+    }
+
+    return [...blogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [allBlogs, activeCategory, search, startDate, endDate]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -79,28 +104,81 @@ export default function Blog() {
               A raw collection of intentional travel, late-night street food, and the beauty found in being beautifully lost.
             </p>
           </div>
-          <div className="p-4 bg-surface-container rounded-xl scrapbook-rotate-right shadow-sm border border-on-surface-variant/10">
-            <div className="flex items-center gap-2 text-secondary font-bold">
-              <MapPin size={18} />
-              <span className="text-sm">Next Stop: Tokyo</span>
-            </div>
-          </div>
         </div>
       </header>
 
-      <div className="flex flex-wrap gap-3 mb-16">
-        {categories.map((cat) => (
-          <button 
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`px-6 py-2 rounded-full font-bold text-sm transition-all hover:scale-105 ${
-              activeCategory === cat ? "bg-primary text-on-primary" : "bg-secondary-container text-secondary"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+      {viewAll && (
+        <div className="mb-16 space-y-6">
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button 
+              onClick={() => setViewAll(false)}
+              className="px-4 py-2 rounded-full font-bold text-xs transition-all bg-secondary-container text-secondary hover:bg-primary hover:text-on-primary"
+            >
+              Highlights
+            </button>
+            {categories.map((cat) => (
+              <button 
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-4 py-2 rounded-full font-bold text-xs transition-all ${
+                  activeCategory === cat ? "bg-primary text-on-primary" : "bg-secondary-container text-secondary"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-6 items-center justify-between bg-surface-container/50 p-6 rounded-2xl">
+            <div className="flex-1 relative w-full max-w-md">
+              <input 
+                type="text"
+                placeholder="Search by title..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full px-6 py-3 bg-surface-container rounded-xl border-none focus:ring-2 focus:ring-primary text-on-surface placeholder:text-on-surface-variant/50 text-sm"
+              />
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-3">
+                <Calendar size={18} className="text-primary" />
+                <span className="text-sm font-bold text-on-surface-variant">Filter by Date:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-surface-container px-3 py-2 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary"
+                />
+                <span className="text-on-surface-variant">to</span>
+                <input 
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-surface-container px-3 py-2 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+
+            {(search || activeCategory !== "All Entries" || startDate || endDate) && (
+              <button 
+                onClick={() => {
+                  setSearch("");
+                  setActiveCategory("All Entries");
+                  setStartDate("");
+                  setEndDate("");
+                }}
+                className="flex items-center gap-2 text-primary font-bold text-sm hover:underline"
+              >
+                <RotateCcw size={16} />
+                Clear Filters
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {error ? (
         <div className="text-center py-20 bg-red-500/10 rounded-2xl border border-red-500/20 px-6">
@@ -108,48 +186,136 @@ export default function Blog() {
           <p className="text-on-surface-variant max-w-md mx-auto">{error}</p>
         </div>
       ) : isLoading ? (
-        <div className="flex flex-col items-center justify-center py-32 gap-6">
-          <Loader2 className="w-12 h-12 text-primary animate-spin" />
-          <p className="text-on-surface-variant font-medium animate-pulse font-headline">Loading field notes...</p>
+        <div className="space-y-12">
+          {viewAll ? (
+            <div className="flex flex-col gap-12">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex flex-col md:flex-row gap-8 items-start">
+                  <Skeleton className="w-full md:w-72 aspect-[4/3] rounded-xl" />
+                  <div className="flex-1 space-y-4">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-1/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+              <div className="md:col-span-8 flex flex-col gap-12">
+                <Skeleton className="w-full aspect-[16/9] rounded-xl" />
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-12 w-3/4" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <Skeleton className="aspect-[4/3] rounded-xl" />
+                  <Skeleton className="aspect-[4/3] rounded-xl" />
+                </div>
+              </div>
+              <div className="md:col-span-4 flex flex-col gap-12">
+                <Skeleton className="aspect-square rounded-lg" />
+                <Skeleton className="aspect-square rounded-lg" />
+                <Skeleton className="h-12 w-full rounded-2xl" />
+              </div>
+            </div>
+          )}
         </div>
       ) : filteredBlogs.length === 0 ? (
         <div className="text-center py-32">
           <p className="text-on-surface-variant text-xl italic font-headline">The journal is empty for this category. Time to write a new story?</p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
-          {/* Main Post (First one) */}
-          {filteredBlogs[0] && (
-            <article className="md:col-span-8 group">
-              <Link to={`/blog/${filteredBlogs[0].id}`}>
-                <motion.div 
-                  whileHover={{ rotate: 0 }}
-                  className="relative mb-8 overflow-hidden rounded-xl scrapbook-rotate-left transition-transform duration-500"
-                >
+      ) : viewAll ? (
+        /* LIST VIEW */
+        <div className="flex flex-col gap-12">
+          {filteredBlogs.map((blog) => (
+            <Link key={blog.id} to={`/blog/${blog.id}`} className="group">
+              <article className="flex flex-col md:flex-row gap-8 items-start">
+                <div className="w-full md:w-72 aspect-[4/3] overflow-hidden rounded-xl">
                   <img 
-                    src={filteredBlogs[0].thumbnail || "https://picsum.photos/seed/travel/1200/800"} 
-                    className="w-full aspect-[16/9] object-cover rounded-xl group-hover:scale-105 transition-transform duration-700"
-                    style={filteredBlogs[0].rotation ? { transform: `rotate(${filteredBlogs[0].rotation}deg)` } : {}}
+                    src={blog.thumbnail || "https://picsum.photos/seed/travel/600/400"} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute top-6 left-6">
-                    <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider text-secondary">{filteredBlogs[0].category}</span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-tertiary-container text-on-surface rounded">{blog.category}</span>
+                    <time className="text-sm text-on-surface-variant font-semibold">{formatDate(blog.date)}</time>
                   </div>
-                </motion.div>
-                <div className="max-w-2xl">
-                  <time className="text-sm text-on-surface-variant font-semibold mb-2 block">{formatDate(filteredBlogs[0].date)}</time>
-                  <h2 className="font-headline text-4xl font-extrabold group-hover:text-primary transition-colors mb-4">{filteredBlogs[0].title}</h2>
+                  <h2 className="font-headline text-3xl font-extrabold group-hover:text-primary transition-colors mb-4">{blog.title}</h2>
+                  <p className="text-on-surface-variant line-clamp-2 mb-4">
+                    Click to read the full journal entry from this adventure in {blog.category}.
+                  </p>
                   <button className="inline-flex items-center gap-2 text-secondary font-bold hover:gap-4 transition-all">
-                    Read Journal Entry <ArrowRight size={20} />
+                    Read Entry <ArrowRight size={18} />
                   </button>
                 </div>
-              </Link>
-            </article>
-          )}
+              </article>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        /* HIGHLIGHT LAYOUT */
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+          {/* Left Column (Featured + 2 Below) */}
+          <div className="md:col-span-8 flex flex-col gap-12">
+            {/* Featured Post */}
+            {filteredBlogs[0] && (
+              <article className="group">
+                <Link to={`/blog/${filteredBlogs[0].id}`}>
+                  <motion.div 
+                    whileHover={{ rotate: 0 }}
+                    className="relative mb-8 overflow-hidden rounded-xl scrapbook-rotate-left transition-transform duration-500"
+                  >
+                    <img 
+                      src={filteredBlogs[0].thumbnail || "https://picsum.photos/seed/travel/1200/800"} 
+                      className="w-full aspect-[16/9] object-cover rounded-xl group-hover:scale-105 transition-transform duration-700"
+                      style={filteredBlogs[0].rotation ? { transform: `rotate(${filteredBlogs[0].rotation}deg)` } : {}}
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute top-6 left-6">
+                      <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider text-secondary">{filteredBlogs[0].category}</span>
+                    </div>
+                  </motion.div>
+                  <div className="max-w-2xl">
+                    <time className="text-sm text-on-surface-variant font-semibold mb-2 block">{formatDate(filteredBlogs[0].date)}</time>
+                    <h2 className="font-headline text-4xl font-extrabold group-hover:text-primary transition-colors mb-4">{filteredBlogs[0].title}</h2>
+                    <button className="inline-flex items-center gap-2 text-secondary font-bold hover:gap-4 transition-all">
+                      Read Journal Entry <ArrowRight size={20} />
+                    </button>
+                  </div>
+                </Link>
+              </article>
+            )}
 
-          {/* Sidebar (Rest of the blogs) */}
+            {/* 2 Posts Below Featured */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              {filteredBlogs.slice(1, 3).map((blog) => (
+                <Link key={blog.id} to={`/blog/${blog.id}`} className="group">
+                  <article>
+                    <div className="mb-6 overflow-hidden rounded-xl">
+                      <img 
+                        src={blog.thumbnail || "https://picsum.photos/seed/travel/800/600"} 
+                        className="w-full aspect-[4/3] object-cover rounded-xl group-hover:scale-105 transition-transform duration-500"
+                        style={blog.rotation ? { transform: `rotate(${blog.rotation}deg)` } : {}}
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <time className="text-sm text-on-surface-variant mb-2 block">{formatDate(blog.date)}</time>
+                    <h3 className="font-headline text-2xl font-extrabold mb-3">{blog.title}</h3>
+                    <span className="text-xs font-bold uppercase tracking-widest text-secondary group-hover:underline">Read Journal</span>
+                  </article>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column (2 Posts + Button + Extras) */}
           <aside className="md:col-span-4 flex flex-col gap-12">
-            {filteredBlogs.slice(1, 4).map((blog) => (
+            {/* 2 Posts on the right side */}
+            {filteredBlogs.slice(3, 5).map((blog) => (
               <Link key={blog.id} to={`/blog/${blog.id}`} className="group">
                 <article>
                   <div className="relative mb-4 overflow-hidden rounded-lg scrapbook-rotate-right transition-transform duration-500 hover:rotate-0">
@@ -169,6 +335,15 @@ export default function Blog() {
               </Link>
             ))}
 
+            {/* See All Blogs Button */}
+            <button 
+              onClick={() => setViewAll(true)}
+              className="w-full py-4 bg-primary text-on-primary rounded-2xl font-bold text-sm hover:scale-[1.02] transition-all shadow-lg shadow-primary/20"
+            >
+              See All Blogs
+            </button>
+
+            {/* Planned Itinerary */}
             <div className="p-8 bg-surface-container rounded-2xl border-2 border-dashed border-on-surface-variant/30 flex flex-col gap-4">
               <h4 className="font-headline text-lg font-bold">Planned Itinerary</h4>
               <ul className="space-y-4">
@@ -187,44 +362,35 @@ export default function Blog() {
                   </div>
                 </li>
               </ul>
-              <button className="mt-4 w-full py-3 bg-on-surface text-surface rounded-xl font-bold text-sm hover:bg-primary transition-colors">
-                Follow the Prep
-              </button>
             </div>
           </aside>
         </div>
       )}
 
-      {/* Bottom Grid for older posts */}
-      {!isLoading && filteredBlogs.length > 4 && (
-        <section className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-12">
-          {filteredBlogs.slice(4).map((blog) => (
-            <Link key={blog.id} to={`/blog/${blog.id}`} className="group">
-              <article>
-                <div className="mb-6 overflow-hidden rounded-xl">
-                  <img 
-                    src={blog.thumbnail || "https://picsum.photos/seed/travel/800/600"} 
-                    className="w-full aspect-[4/3] object-cover rounded-xl group-hover:scale-105 transition-transform duration-500"
-                    style={blog.rotation ? { transform: `rotate(${blog.rotation}deg)` } : {}}
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                <time className="text-sm text-on-surface-variant mb-2 block">{formatDate(blog.date)}</time>
-                <h3 className="font-headline text-2xl font-extrabold mb-3">{blog.title}</h3>
-                <span className="text-xs font-bold uppercase tracking-widest text-secondary group-hover:underline">Read Journal</span>
-              </article>
+      {/* Visual Archive - Full Width Bottom */}
+      <section className="mt-24">
+        <div className="bg-secondary text-on-primary rounded-[3rem] p-12 md:p-24 overflow-hidden relative z-10">
+          <div className="relative z-30 max-w-2xl">
+            <span className="inline-block bg-white/20 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6 border border-white/20">
+              Visual Archive
+            </span>
+            <h2 className="font-headline font-black text-5xl md:text-6xl mb-6 leading-tight">Stay Curious.<br/>Travel Deep.</h2>
+            <p className="text-on-primary/80 text-xl mb-10 leading-relaxed">
+              Adventure isn't about how far you go, but how much you see. We're constantly updating our field notes with new discoveries, hidden alleys, and local flavors from the road.
+            </p>
+            <Link to="/gallery" className="inline-flex items-center gap-3 bg-surface text-secondary px-10 py-4 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl group relative z-40">
+              Explore the Gallery
+              <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
             </Link>
-          ))}
-          
-          <div className="bg-primary-container p-8 rounded-xl flex flex-col justify-center aspect-[4/3]">
-            <Mail size={40} className="text-on-surface mb-4" />
-            <h3 className="font-headline text-2xl font-extrabold mb-2">Want the Full Log?</h3>
-            <p className="text-on-surface-variant text-sm mb-6">Our raw, unedited travel notes are delivered weekly to our inner circle.</p>
-            <input className="bg-white/50 border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary mb-3" placeholder="Email Address" />
-            <button className="bg-on-surface text-surface py-3 rounded-lg font-bold text-sm">Join the Newsletter</button>
           </div>
-        </section>
-      )}
+          
+          {/* Decorative Globe */}
+          <div className="absolute right-0 bottom-0 opacity-10 translate-x-1/4 translate-y-1/4 pointer-events-none z-0">
+            <Globe size={480} />
+          </div>
+        </div>
+      </section>
     </div>
+
   );
 }

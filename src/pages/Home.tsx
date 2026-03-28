@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { ArrowRight, Map, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Skeleton } from "../components/Skeleton";
 
 interface Blog {
   id: string;
@@ -149,8 +150,10 @@ export default function Home() {
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="aspect-square rounded-xl" />
+              ))}
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -195,8 +198,15 @@ export default function Home() {
           </div>
           
           {isLoading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className={`bg-surface-container rounded-3xl p-8 h-[450px] ${i === 1 ? 'md:mt-12' : ''}`}>
+                  <Skeleton className="h-64 w-full rounded-xl mb-6" />
+                  <Skeleton className="h-8 w-3/4 mb-4" />
+                  <Skeleton className="h-4 w-1/2 mb-6" />
+                  <Skeleton className="h-4 w-1/4" />
+                </div>
+              ))}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

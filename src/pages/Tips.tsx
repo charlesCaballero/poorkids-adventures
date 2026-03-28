@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
-import { Backpack, Utensils, Train, CheckCircle, ArrowRight, Wallet, Home, Globe, Compass, X, Users, Smartphone, ShieldCheck } from "lucide-react";
+import { Backpack, Utensils, Train, CheckCircle, ArrowRight, Wallet, Home, Globe, Compass, X, Users, Smartphone, ShieldCheck, Luggage } from "lucide-react";
 
 interface TipDetail {
   id: string;
@@ -127,6 +127,41 @@ export default function Tips() {
               <li><strong>Sleeper Buses:</strong> Great for long distances (Hanoi to Sapa). You get a full bed!</li>
               <li><strong>Reunification Express:</strong> The train from North to South. Book "Soft Sleeper" for the best experience.</li>
             </ul>
+          </section>
+        </div>
+      )
+    },
+    connectivity: {
+      id: "connectivity",
+      title: "The Digital Survival Kit",
+      category: "DIGITAL",
+      icon: Smartphone,
+      image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=1200",
+      fallback: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800",
+      content: (
+        <div className="space-y-6">
+          <p className="text-lg leading-relaxed">
+            In the modern age, your smartphone is your most powerful travel tool. But without the right prep, it can also be your biggest expense or security risk.
+          </p>
+          
+          <section>
+            <h4 className="font-bold text-xl mb-3 text-primary">Ditch the Roaming Fees</h4>
+            <p className="mb-2">Never pay for a daily roaming plan. Instead:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong>eSIMs:</strong> Use apps like Airalo or Holafly to buy local data before you land.</li>
+              <li><strong>Local SIMs:</strong> Often the cheapest option. Look for kiosks in the arrivals hall.</li>
+              <li><strong>Wi-Fi Calling:</strong> Enable this to receive texts and calls over Wi-Fi without charges.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-xl mb-3 text-primary">Offline Navigation</h4>
+            <p>Don't rely on a constant signal. Download offline maps for your destination on Google Maps or use Maps.me. It saves battery and works in the most remote alleys.</p>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-xl mb-3 text-primary">Public Wi-Fi Safety</h4>
+            <p>Hostel and cafe Wi-Fi are notoriously insecure. Always use a VPN (like NordVPN or ProtonVPN) when accessing banking or sensitive accounts on public networks.</p>
           </section>
         </div>
       )
@@ -290,28 +325,31 @@ export default function Tips() {
         </div>
       </section>
 
-      <section className="mt-32 relative">
-        <div className="bg-secondary text-on-primary rounded-[3rem] p-12 md:p-24 overflow-hidden relative z-10">
+      <section className="mt-32">
+        {/* Digital Survival */}
+        <div className="bg-primary text-on-primary rounded-[3rem] p-12 md:p-24 overflow-hidden relative z-10">
           <div className="relative z-30 max-w-2xl">
             <span className="inline-block bg-white/20 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6 border border-white/20">
-              The Visual Archive
+              Digital Survival
             </span>
-            <h2 className="font-headline font-black text-5xl md:text-6xl mb-6 leading-tight">Stay Curious.<br/>Travel Deep.</h2>
+            <h2 className="font-headline font-black text-5xl md:text-6xl mb-6 leading-tight">Stay Connected.<br/>Stay Secure.</h2>
             <p className="text-on-primary/80 text-xl mb-10 leading-relaxed">
-              Adventure isn't about how far you go, but how much you see. We're constantly updating our field notes with new discoveries, hidden alleys, and local flavors from the road.
+              Roaming fees are the enemy of a budget trip. Master the art of eSIMs, offline navigation, and securing your data so you can wander with confidence.
             </p>
-            <Link to="/gallery" className="inline-flex items-center gap-3 bg-surface text-secondary px-10 py-4 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl group relative z-40">
-              Explore the Gallery
+            <button 
+              onClick={() => setSelectedTip(tipsData.connectivity)}
+              className="inline-flex items-center gap-3 bg-white text-primary px-10 py-4 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl group relative z-40"
+            >
+              See Connectivity Tips
               <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
-            </Link>
+            </button>
           </div>
           
-          {/* Decorative Globe */}
+          {/* Decorative Phone */}
           <div className="absolute right-0 bottom-0 opacity-10 translate-x-1/4 translate-y-1/4 pointer-events-none z-0">
-            <Globe size={480} />
+            <Smartphone size={480} />
           </div>
         </div>
-
       </section>
 
       {/* Tip Detail Modal */}
